@@ -267,8 +267,9 @@ public abstract class ArbitrumTestBlockchainBase(ChainSpec chainSpec, ArbitrumCo
                 BlockProducerRunner,
                 ctx.Resolve<IBlocksConfig>(),
                 NullLogManager.Instance))
-            .AddSingleton<FakeConsensusRpcClient>()
-            .AddSingleton<IConsensusRpcClient>(c => c.Resolve<FakeConsensusRpcClient>());
+            .AddSingleton<FakeArbitrumConsensusClient>()
+            .AddSingleton<IArbitrumConsensusClient>(c => c.Resolve<FakeArbitrumConsensusClient>())
+            .AddSingleton<IBlockMetadataProvider, BlockMetadataProvider>();
     }
 
     public void RebuildWasmStore(Hash256? startPosition = null, CancellationToken cancellationToken = default)
@@ -387,7 +388,7 @@ public abstract class ArbitrumTestBlockchainBase(ChainSpec chainSpec, ArbitrumCo
     private void RegisterTransactionDecoders() => InitTxTypesAndRlpDecoders();
 }
 
-public sealed class FakeConsensusRpcClient : IConsensusRpcClient
+public sealed class FakeArbitrumConsensusClient : IArbitrumConsensusClient
 {
     private readonly ConcurrentDictionary<long, byte[]?> _responses = new();
 

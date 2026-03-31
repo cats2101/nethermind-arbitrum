@@ -39,6 +39,7 @@ using Nethermind.Wallet;
 using Nethermind.Arbitrum.Execution.Stateless;
 using Nethermind.Arbitrum.Math;
 using Nethermind.Consensus.Stateless;
+using Nethermind.Arbitrum.Rpc;
 using Nethermind.Arbitrum.Stylus;
 
 namespace Nethermind.Arbitrum.Test.Infrastructure;
@@ -436,7 +437,7 @@ public class ArbitrumRpcTestBlockchain : ArbitrumTestBlockchainBase
             chain.Container.Resolve<SequencerState>(),
             chain.Container.Resolve<IEthereumEcdsa>(),
             chain.Container.Resolve<IArbitrumConfig>(),
-            chain.Container.Resolve<FakeConsensusRpcClient>()
+            chain.Container.Resolve<IBlockMetadataProvider>()
         );
     }
 

@@ -671,7 +671,7 @@ public class TimeboostSequencerEngineTests
         // Block layout: [ArbOS internal (idx 0), regular (idx 1), timeboosted (idx 2)]
         // Metadata: byte 0 = flags, byte 1 = bitmap with bit 2 set → [0x00, 0x04]
         byte[] blockMetadata = [0x00, 0x04];
-        chain.Container.Resolve<FakeConsensusRpcClient>().SetupResult(chain.BlockTree.Head!.Number, blockMetadata);
+        chain.Container.Resolve<FakeArbitrumConsensusClient>().SetupResult(chain.BlockTree.Head!.Number, blockMetadata);
 
         Block block = chain.BlockTree.FindBlock(chain.BlockTree.Head!.Number)!;
         Hash256 regularTxHash = block.Transactions[1].Hash!;

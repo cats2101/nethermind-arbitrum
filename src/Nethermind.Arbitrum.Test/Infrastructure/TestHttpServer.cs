@@ -3,6 +3,7 @@
 
 using System.Net;
 using System.Net.Sockets;
+using ConcurrentCollections;
 
 namespace Nethermind.Arbitrum.Test.Infrastructure;
 
@@ -20,12 +21,29 @@ public class TestHttpServer : IDisposable
 
     public static TestHttpServer Start()
     {
-        HttpListener listener = new();
-        string uri = GetLocalhostUri();
-        listener.Prefixes.Add(uri);
-        listener.Start();
+        for (int attempt = 0; attempt < 10; attempt++)
+        {
+            TcpListener tcp = new(IPAddress.Loopback, 0);
+            tcp.Start();
+            int port = ((IPEndPoint)tcp.LocalEndpoint).Port;
+            string uri = $"http://localhost:{port}/";
 
-        return new TestHttpServer(listener, uri);
+            HttpListener listener = new();
+            listener.Prefixes.Add(uri);
+
+            tcp.Stop(); // release the port…
+            try
+            {
+                listener.Start(); // …and immediately rebind it
+                return new TestHttpServer(listener, uri);
+            }
+            catch (HttpListenerException)
+            {
+                listener.Close();
+            }
+        }
+
+        throw new InvalidOperationException($"Could not get free port for the {nameof(TestHttpServer)}");
     }
 
     public async Task Handle(Func<string, byte[]> handle, string contentType = "application/json")
@@ -40,15 +58,6 @@ public class TestHttpServer : IDisposable
         ctx.Response.ContentLength64 = response.Length;
         await ctx.Response.OutputStream.WriteAsync(response);
         ctx.Response.Close();
-    }
-
-    private static string GetLocalhostUri()
-    {
-        using TcpListener tcp = new(IPAddress.Loopback, 0);
-        tcp.Start();
-        int port = ((IPEndPoint)tcp.LocalEndpoint).Port;
-        tcp.Stop();
-        return $"http://localhost:{port}/";
     }
 
     public void Dispose()

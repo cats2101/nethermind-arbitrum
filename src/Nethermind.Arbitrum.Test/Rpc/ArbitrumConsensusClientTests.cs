@@ -13,12 +13,12 @@ using Nethermind.Serialization.Json;
 namespace Nethermind.Arbitrum.Test.Rpc;
 
 [TestFixture]
-public class ConsensusRpcClientTests
+public class ArbitrumConsensusClientTests
 {
     [Test]
     public async Task GetBlockMetadataAsync_DisabledClient_ReturnsNull()
     {
-        DisabledConsensusRpcClient client = new(LimboLogs.Instance);
+        DisabledArbitrumConsensusClient client = new(LimboLogs.Instance);
 
         byte[]? result = await client.GetBlockMetadataAsync(100);
 
@@ -29,7 +29,7 @@ public class ConsensusRpcClientTests
     public async Task GetBlockMetadataAsync_BlockBeforeGenesis_ReturnsNull()
     {
         using TestHttpServer server = TestHttpServer.Start();
-        using ConsensusRpcClient client = CreateClient(genesisBlockNum: 100, consensusUrl: server.Uri);
+        using ArbitrumConsensusClient client = CreateClient(genesisBlockNum: 100, consensusUrl: server.Uri);
 
         byte[]? result = await client.GetBlockMetadataAsync(99);
 
@@ -39,7 +39,7 @@ public class ConsensusRpcClientTests
     [Test]
     public async Task GetBlockMetadataAsync_RpcCallFails_ReturnsNull()
     {
-        using ConsensusRpcClient client = CreateClient(consensusUrl: "http://127.0.0.1:1");
+        using ArbitrumConsensusClient client = CreateClient(consensusUrl: "http://127.0.0.1:1/");
 
         byte[]? result = await client.GetBlockMetadataAsync(10);
 
@@ -50,7 +50,7 @@ public class ConsensusRpcClientTests
     public async Task GetBlockMetadataAsync_ConsensusNodeAvailable_ReturnsMetadata()
     {
         using TestHttpServer server = TestHttpServer.Start();
-        using ConsensusRpcClient client = CreateClient(consensusUrl: server.Uri);
+        using ArbitrumConsensusClient client = CreateClient(consensusUrl: server.Uri);
 
         Task handleTask = server.Handle(body =>
         {
@@ -72,7 +72,7 @@ public class ConsensusRpcClientTests
     public async Task GetBlockMetadataAsync_BlockAfterGenesis_SendsCorrectMsgIdx()
     {
         using TestHttpServer server = TestHttpServer.Start();
-        using ConsensusRpcClient client = CreateClient(genesisBlockNum: 100, consensusUrl: server.Uri);
+        using ArbitrumConsensusClient client = CreateClient(genesisBlockNum: 100, consensusUrl: server.Uri);
 
         string? receivedParams = null;
         Task handleTask = server.Handle(body =>
@@ -99,7 +99,7 @@ public class ConsensusRpcClientTests
     public async Task GetBlockMetadataAsync_NullResult_ReturnsNull()
     {
         using TestHttpServer server = TestHttpServer.Start();
-        using ConsensusRpcClient client = CreateClient(consensusUrl: server.Uri);
+        using ArbitrumConsensusClient client = CreateClient(consensusUrl: server.Uri);
 
         Task handleTask = server.Handle(body =>
         {
@@ -114,12 +114,10 @@ public class ConsensusRpcClientTests
         result.Should().BeNull();
     }
 
-    private static ConsensusRpcClient CreateClient(
-        ulong genesisBlockNum = 0,
-        string consensusUrl = "http://localhost:1")
+    private static ArbitrumConsensusClient CreateClient(ulong genesisBlockNum = 0, string consensusUrl = "http://localhost:1/")
     {
         ArbitrumConfig config = new() { ConsensusNodeRpcUrl = consensusUrl };
         ArbitrumSpecHelper specHelper = new(new ArbitrumChainSpecEngineParameters { GenesisBlockNum = genesisBlockNum });
-        return new ConsensusRpcClient(config, specHelper, new EthereumJsonSerializer(), LimboLogs.Instance);
+        return new ArbitrumConsensusClient(config, specHelper, new EthereumJsonSerializer(), LimboLogs.Instance);
     }
 }
