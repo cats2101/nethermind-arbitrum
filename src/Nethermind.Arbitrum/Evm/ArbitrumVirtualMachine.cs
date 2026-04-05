@@ -764,6 +764,10 @@ public sealed unsafe class ArbitrumVirtualMachine(
         ArbitrumPrecompileExecutionContext context,
         Exception exception)
     {
+        ArbitrumPrecompileException? precompEx = exception as ArbitrumPrecompileException;
+        if (Out.IsTargetBlock)
+            Out.Log($"precompile exception type={precompEx?.Type} outputLen={precompEx?.Output.Length ?? 0} message={exception.Message} gasLeft={context.GasLeft}");
+
         (bool shouldRevert, ulong gasToReturn, bool ranOutOfGas) = exception switch
         {
             ArbitrumPrecompileException precompileException => precompileException switch
@@ -782,6 +786,9 @@ public sealed unsafe class ArbitrumVirtualMachine(
             // Other exception types outside of direct precompile control should be handled by default
             _ => DefaultExceptionHandling(context, exception)
         };
+
+        if (Out.IsTargetBlock)
+            Out.Log($"precompile exception handled shouldRevert={shouldRevert} gasToReturn={gasToReturn} ranOutOfGas={ranOutOfGas}");
 
         ReturnSomeGas(state, gasToReturn);
 

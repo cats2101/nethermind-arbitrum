@@ -77,7 +77,15 @@ public class StylusPrograms(ArbosStorage storage, ulong arbosVersion)
         if (Out.IsTargetBlock)
             Out.Log($"stylus activateProgram contract={address} blockTimestamp={blockTimestamp} runMode={runMode} debugMode={debugMode}");
 
-        if (state.IsDeadAccount(address))
+        bool isDead = state.IsDeadAccount(address);
+        if (Out.IsTargetBlock)
+        {
+            ValueHash256 codeHash0 = state.GetCodeHash(address);
+            bool accountExists = state.AccountExists(address);
+            Out.Log($"stylus activateProgram deadCheck isDead={isDead.ToString().ToLowerInvariant()} accountExists={accountExists.ToString().ToLowerInvariant()} codeHash={codeHash0} address={address}");
+        }
+
+        if (isDead)
             return ProgramActivationResult.Failure(takeAllGas: false, new(StylusOperationResultType.UnknownError, "Account self-destructed", []));
 
         ValueHash256 codeHash = state.GetCodeHash(address);
