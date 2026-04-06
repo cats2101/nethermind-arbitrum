@@ -13,9 +13,9 @@ using Nethermind.Arbitrum.Math;
 using Nethermind.Arbitrum.Stylus;
 using Nethermind.Arbitrum.Tracing;
 using Nethermind.Core;
+using Nethermind.Core.Collections;
 using Nethermind.Core.Crypto;
 using Nethermind.Core.Extensions;
-using Nethermind.Evm;
 using Nethermind.Evm.State;
 using Nethermind.Int256;
 using Nethermind.Logging;
@@ -72,20 +72,21 @@ public class StylusPrograms(ArbosStorage storage, ulong arbosVersion)
         return stylusParams;
     }
 
-    public ProgramActivationResult ActivateProgram(Address address, IWorldState state, IWasmStore wasmStore, ulong blockTimestamp, MessageRunMode runMode, bool debugMode)
+    public ProgramActivationResult ActivateProgram(Address address, IWorldState state, IWasmStore wasmStore, ulong blockTimestamp, MessageRunMode runMode, bool debugMode, IHashSetEnumerableCollection<Address> destroyList)
     {
         if (Out.IsTargetBlock)
             Out.Log($"stylus activateProgram contract={address} blockTimestamp={blockTimestamp} runMode={runMode} debugMode={debugMode}");
 
-        bool isDead = state.IsDeadAccount(address);
+        bool accountToBeDestroyed = destroyList.Contains(address);
         if (Out.IsTargetBlock)
         {
+            bool isDead = state.IsDeadAccount(address);
             ValueHash256 codeHash0 = state.GetCodeHash(address);
             bool accountExists = state.AccountExists(address);
-            Out.Log($"stylus activateProgram deadCheck isDead={isDead.ToString().ToLowerInvariant()} accountExists={accountExists.ToString().ToLowerInvariant()} codeHash={codeHash0} address={address}");
+            Out.Log($"stylus activateProgram deadCheck isDead={isDead} accountExists={accountExists} codeHash={codeHash0} address={address} toBeDestroyed={accountToBeDestroyed}");
         }
 
-        if (isDead)
+        if (accountToBeDestroyed)
             return ProgramActivationResult.Failure(takeAllGas: false, new(StylusOperationResultType.UnknownError, "Account self-destructed", []));
 
         ValueHash256 codeHash = state.GetCodeHash(address);
